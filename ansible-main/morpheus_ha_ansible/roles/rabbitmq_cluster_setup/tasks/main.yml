@@ -1,0 +1,23 @@
+---
+- name: Install RabbitMQ
+  ansible.builtin.dnf:
+    name: rabbitmq-server
+    state: present
+
+- name: Stop RabbitMQ on non-SOT nodes
+  ansible.builtin.command:
+    cmd: rabbitmqctl stop_app
+  when: inventory_hostname != "app-node01"
+  changed_when: false
+
+- name: Join RabbitMQ cluster on non-SOT nodes
+  ansible.builtin.command:
+    cmd: rabbitmqctl join_cluster rabbit@app-node01
+  when: inventory_hostname != "app-node01"
+  changed_when: false
+
+- name: Start RabbitMQ
+  ansible.builtin.service:
+    name: rabbitmq-server
+    state: started
+    enabled: true

@@ -1,0 +1,17 @@
+---
+- name: Install Elasticsearch
+  ansible.builtin.dnf:
+    name: elasticsearch
+    state: present
+
+- name: Configure Elasticsearch
+  ansible.builtin.template:
+    src: elasticsearch.yml.j2
+    dest: /etc/elasticsearch/elasticsearch.yml
+    mode: '0644'  # Setting file permissions
+
+- name: Start Elasticsearch
+  ansible.builtin.service:
+    name: elasticsearch
+    state: started
+    enabled: true

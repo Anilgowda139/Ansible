@@ -1,0 +1,31 @@
+# tasks for Debian Family
+---
+- name: Install Percona XtraDB Release Script
+  ansible.builtin.apt:
+    deb: "{{ xtradb_release_package }}"
+
+- name: Setup Percona release repository
+  ansible.builtin.command:
+    cmd: "percona-release setup pxc{{ xtradb_version }}"
+    creates: "/etc/apt/sources.list.d/{{ xtradb_release_repo_filename }}"
+
+- name: Update cache
+  ansible.builtin.apt:
+    update_cache: true
+  changed_when: false
+
+- name: Set debconf selection for root password
+  ansible.builtin.debconf:
+    name: percona-xtradb-cluster-server
+    question: percona-xtradb-cluster-server/root-pass
+    value: "{{ xtradb_root_password }}"
+    vtype: password
+
+- name: Set debconf selection for re root password
+  ansible.builtin.debconf:
+    name: percona-xtradb-cluster-server
+    question: percona-xtradb-cluster-server/re-root-pass
+    value: "{{ xtradb_root_password }}"
+    vtype: password
+
+...

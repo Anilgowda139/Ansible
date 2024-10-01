@@ -1,0 +1,15 @@
+# roles/ansible-role-XtraDB-Cluster/vars/RedHat.yml
+#
+# Distribution-specific variables for RHEL, CentOS, ...
+---
+
+xtradb_repo_rpm: "https://repo.percona.com/yum/percona-release-latest.noarch.rpm"
+xtradb_release_repo_filename: "percona-pxc-80-release.repo"
+xtradb_wsrep_provider: /usr/lib64/libgalera_smm.so
+xtradb_confdir: /etc/mysql
+xtradb_config_file: "{{ xtradb_confdir }}/wsrep.cnf"
+xtradb_packages:
+  - "percona-xtradb-cluster"
+xtradb_socket: "/var/lib/mysql/mysql.sock"
+mysql_error_log_location: /var/log/mysqld.log
+...

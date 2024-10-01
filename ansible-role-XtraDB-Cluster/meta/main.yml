@@ -1,0 +1,23 @@
+---
+galaxy_info:
+  author: tryfan
+  description: Install and configure a Cluster Mysql
+  company: "private"
+  role_name: xtradb_cluster
+
+  license: Apache
+
+  min_ansible_version: "2.4"
+
+  platforms:
+    - name: Ubuntu
+    - name: EL
+
+  galaxy_tags:
+    - system
+    - percona
+    - xtradb
+    - mysql
+    - cluster
+
+dependencies: []

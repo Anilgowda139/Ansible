@@ -1,0 +1,89 @@
+# tasks for Red Hat Familly
+---
+- name: Bound IP Addresses
+  ansible.builtin.debug:
+    var: xtradb_bind_address
+
+- name: Master IP Address
+  ansible.builtin.debug:
+    msg: "{{ hostvars[groups['db'][0]].ansible_default_ipv4.address }}"
+
+- name: Disable SELinux
+  ansible.posix.selinux:
+    state: disabled
+  when: ansible_selinux.status == 'enabled'
+
+- name: Import RPM GPG Key for Percona
+  ansible.builtin.rpm_key:
+    state: present
+    key: https://downloads.percona.com/downloads/RPM-GPG-KEY-percona
+
+- name: Install Percona XtraDB Release Script
+  ansible.builtin.package:
+    name: "{{ xtradb_repo_rpm }}"
+    state: present
+
+- name: Setup Percona release repository
+  ansible.builtin.command:
+    cmd: "percona-release setup -y pxc{{ xtradb_version }}"
+    creates: "/etc/yum.repos.d/{{ xtradb_release_repo_filename }}"
+
+- name: EL7 | Install MySQL Python connector
+  ansible.builtin.package:
+    name: MySQL-python
+    state: present
+  when: ansible_facts['distribution_major_version'] == "7"
+
+- name: EL8/9 | Install MySQL Python connector
+  ansible.builtin.package:
+    name: python3-PyMySQL
+    state: present
+  when: (ansible_facts['distribution_major_version'] == "8") or
+        (ansible_facts['distribution_major_version'] == "9")
+
+- name: EL7 | Set Python firewalld module package name
+  ansible.builtin.set_fact:
+    python_firewalld_module_package: python-firewall
+  when: ansible_facts['distribution_major_version'] == "7"
+
+- name: EL8/9 | Set Python firewalld module package name
+  ansible.builtin.set_fact:
+    python_firewalld_module_package: python3-firewall
+  when: (ansible_facts['distribution_major_version'] == "8") or
+        (ansible_facts['distribution_major_version'] == "9")
+
+- name: EL8/9 | Install diffutils
+  ansible.builtin.package:
+    name: diffutils
+    state: present
+  when: (ansible_facts['distribution_major_version'] == "8") or
+        (ansible_facts['distribution_major_version'] == "9")
+
+- name: EL | Install firewalld python module
+  ansible.builtin.package:
+    name: "{{ python_firewalld_module_package }}"
+    state: present
+  when: xtradb_configure_firewalld
+
+- name: EL | Install firewalld python module
+  ansible.builtin.package:
+    name: "{{ python_firewalld_module_package }}"
+    state: present
+  when: xtradb_configure_firewalld
+
+- name: EL | Set firewalld ports
+  ansible.posix.firewalld:
+    port: "{{ fwport }}/tcp"
+    permanent: true
+    state: enabled
+    immediate: true
+  with_items:
+    - 3306
+    - 4444
+    - 4567
+    - 4568
+  when: xtradb_configure_firewalld
+  loop_control:
+    loop_var: fwport
+
+...

@@ -1,0 +1,24 @@
+---
+- hosts: elasticsearch
+  gather_facts: true
+  become: true
+  roles:
+    - elasticsearch
+
+- hosts: db
+  gather_facts: true
+  become: true
+  roles:
+    - xtradb-cluster
+
+- hosts: rabbitmq
+  gather_facts: true
+  become: true
+  roles:
+    - rabbitmq
+
+- hosts: morpheus
+  gather_facts: true
+  become: true
+  roles:
+    - morpheus

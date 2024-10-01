@@ -1,0 +1,15 @@
+# roles/ansible-role-XtraDB-Cluster/vars/Debian.yml
+#
+# Distribution-specific variables for Debian, Ubuntu, ...
+---
+xtradb_release_package: "https://repo.percona.com/apt/percona-release_latest.generic_all.deb"
+xtradb_release_repo_filename: "percona-pxc-80-release.list"
+xtradb_wsrep_provider: /usr/lib/libgalera_smm.so
+xtradb_confdir: /etc/mysql/mysql.conf.d
+xtradb_config_file: "{{ xtradb_confdir }}/wsrep.cnf"
+xtradb_packages:
+  - percona-xtradb-cluster
+  - python3-mysqldb
+xtradb_socket: "/var/run/mysqld/mysqld.sock"
+mysql_error_log_location: /var/log/mysql/error.log
+...

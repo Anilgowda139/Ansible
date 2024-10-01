@@ -1,0 +1,126 @@
+morpheus_appliance_url: "https://{{ play_hosts[0] }}"
+
+morpheus_elastic_external: true
+morpheus_elastic_cluster_name: morpheus
+morpheus_elastic_tls: true
+morpheus_elastic_auth_user: morpheus
+morpheus_elastic_auth_password: morphpass
+morpheus_elastic_ca_file: es_ca.pem
+morpheus_elastic_hosts:
+    - host: "{{ hostvars[ groups['elasticsearch'][0] ].inventory_hostname }}"
+      port: 9200
+    - host: "{{ hostvars[ groups['elasticsearch'][1] ].inventory_hostname }}"
+      port: 9200
+    - host: "{{ hostvars[ groups['elasticsearch'][2] ].inventory_hostname }}"
+      port: 9200
+
+
+es_config:
+    node.name: "{{ inventory_hostname }}"
+    cluster.name: "morpheus"
+    cluster.initial_master_nodes: "{{ play_hosts[0] }}"
+    discovery.seed_hosts: "[ {{ play_hosts | product(['9300']) | map('join', ':') | join(',') | regex_replace('^', '\"') | regex_replace(',', '\",\"') | regex_replace('$', '\"') }} ]"
+    http.port: 9200
+    transport.port: 9300
+    node.data: true
+    node.master: true
+    bootstrap.memory_lock: true
+    network.bind_host: "0.0.0.0"
+    network.publish_host: "{{ inventory_hostname }}"
+es_heap_size: 1g
+es_enable_xpack: true
+es_api_port: 9200
+es_api_basic_auth_username: admin
+es_api_basic_auth_password: morphpass$
+es_enable_transport_ssl: true
+es_enable_http_ssl: true
+es_enable_auto_ssl_configuration: true
+es_ssl_verification_mode: none
+es_ssl_certificate: es_server.pem
+es_ssl_key: es_server.key
+es_ssl_certificate_authority: es_ca.pem
+es_xpack_features:
+    - security
+es_users:
+    file:
+        morpheus:
+            password: morphpass
+            roles:
+                - morpheusrole
+es_roles:
+    file:
+        morpheusrole:
+            cluster:
+                - all
+            indices:
+                - names:
+                    - "*"
+                  privileges:
+                    - all
+
+rabbitmq_plugins:
+    - rabbitmq_stomp
+    - rabbitmq_management
+rabbitmq_vhost_name: morpheus
+rabbitmq_mgmt_user: morpheus
+rabbitmq_mgmt_password: morphpass
+rabbitmq_user: rabbitmquser
+rabbitmq_password: rabbitmqpassword
+rabbitmq_tls_enable: true
+rabbitmq_tls_use_custom_cert: true
+rabbitmq_tls_custom_cabundle_filename: ca.pem
+rabbitmq_tls_custom_cert_filename: server-cert.pem
+rabbitmq_tls_custom_priv_filename: server-key.pem
+
+morpheus_rabbitmq_port: 5671
+morpheus_rabbitmq_stomp_port: 61614
+morpheus_rabbitmq_external: true
+morpheus_rabbitmq_lb: 127.0.0.1
+morpheus_rabbitmq_user: "{{ rabbitmq_user }}"
+morpheus_rabbitmq_password: "{{ rabbitmq_password }}"
+morpheus_rabbitmq_vhost: "{{ rabbitmq_vhost_name }}"
+morpheus_rabbitmq_use_tls: true
+
+morpheus_mysql_external: true
+morpheus_db_group: db
+morpheus_db: morpheusdb
+morpheus_db_user: morpheus
+morpheus_db_pass: Pa55w0rd!
+morpheus_db_port: 3306
+morpheus_db_url_override: true
+morpheus_db_url_override_options: "/{{ morpheus_db }}?autoReconnect=true&useUnicode=true&characterEncoding=utf8&failOverReadOnly=false&useSSL=true&verifyServerCertificate=false"
+
+xtradb_cluster_name: "morpheus"
+xtradb_sst_user: sstuser
+xtradb_sst_password: s3cr3t
+xtradb_root_password: evenmores3cr3t
+
+xtradb_nodes_group: "{{ morpheus_db_group }}"
+xtradb_bind_interface: eth0
+
+xtradb_bind_address: "{{ ansible_default_ipv4.address }}"
+xtradb_wsrep_cluster_address: "gcomm://{{ groups[xtradb_nodes_group] | map('extract', hostvars, ['ansible_default_ipv4', 'address']) | join(',') }}"
+xtradb_master_node: "{{ hostvars[ groups[xtradb_nodes_group][0] ].ansible_default_ipv4.address }}"
+xtradb_pxc_strict_mode: "PERMISSIVE"
+xtradb_wsrep_sync_wait: 2
+
+xtradb_tls_enabled: true
+
+# Boolean for self-signed certificates
+xtradb_tls_self_signed: false
+xtradb_tls_custom_cert: true
+xtradb_tls_ca_filename: ca.pem
+xtradb_tls_cert_filename: server-cert.pem
+xtradb_tls_key_filename: server-key.pem
+
+# Disallow non-SSL clients
+xtradb_ssl_client_only: true
+
+xtradb_databases:
+    - name: "{{morpheus_db}}"
+xtradb_users:
+    - name: "{{ morpheus_db_user }}"
+      host: '%'
+      password: "{{ morpheus_db_pass }}"
+      priv: "*.*:SELECT,PROCESS,SHOW DATABASES/{{morpheus_db}}.*:ALL"
+      append_privs: false

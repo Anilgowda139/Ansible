@@ -1,0 +1,15 @@
+---
+# This is an example playbook to execute Ansible tests.
+
+- name: Verify
+  hosts: all
+  gather_facts: false
+  pre_tasks:
+    - name: vars
+      include_vars: vars/dbcommon.yml
+  tasks:
+  - name: Check cluster status
+
+  - name: Example assertion
+    ansible.builtin.assert:
+      that: true

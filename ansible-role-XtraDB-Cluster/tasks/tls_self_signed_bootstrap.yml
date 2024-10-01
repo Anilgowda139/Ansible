@@ -1,0 +1,114 @@
+---
+- name: Install openssl
+  ansible.builtin.package:
+    name: openssl
+    state: present
+
+- name: "Stopping {{ xtradb_service }}"
+  ansible.builtin.service:
+    name: "{{ xtradb_service }}"
+    state: stopped
+
+- name: "Stopping again - {{ xtradb_service }}"
+  ansible.builtin.service:
+    name: "{{ xtradb_service }}"
+    state: stopped
+  failed_when: false
+
+- name: Wait for mysql to stop
+  ansible.builtin.pause:
+    seconds: 10
+
+- name: Generate configuration
+  ansible.builtin.template:
+    src: xtradb.cnf.j2
+    dest: "{{ xtradb_config_file }}"
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Configure swappiness
+  ansible.posix.sysctl:
+    name: vm.swappiness
+    value: "{{ xtradb_swappiness }}"
+    state: present
+  when:
+    - docker is not defined
+
+- name: Start the master node
+  ansible.builtin.service:
+    name: "{{ xtradb_service }}@bootstrap.service"
+    state: started
+  when:
+    - xtradb_bind_address == xtradb_master_node
+
+- name: Fetch SSL files from master
+  ansible.builtin.fetch:
+    src: "/var/lib/mysql/{{ item }}"
+    dest: "tmp/{{ item }}"
+    flat: true
+  loop:
+    - "ca.pem"
+    - "server-cert.pem"
+    - "server-key.pem"
+  delegate_to: "{{ play_hosts[0] }}"
+
+- name: Copy Self Signed certificates from master to slave nodes
+  ansible.builtin.copy:
+    src: "tmp/{{ item }}"
+    dest: "/var/lib/mysql/{{ item }}"
+    mode: 0600
+  loop:
+    - "ca.pem"
+    - "server-cert.pem"
+    - "server-key.pem"
+  when:
+    - xtradb_bind_address != xtradb_master_node
+
+- name: Starting slave nodes
+  when:
+    - xtradb_bind_address != xtradb_master_node
+  block:
+    - name: Start the slave nodes
+      ansible.builtin.service:
+        name: "{{ xtradb_service }}"
+        state: started
+  rescue:
+    - name: Get 1000 lines of logs
+      ansible.builtin.command: "tail -n 1000 {{ mysql_error_log_location }}"
+      register: dumplog
+      when: true
+    - name: Output logs
+      ansible.builtin.debug:
+        var: dumplog.stdout_lines
+
+- name: Marking as configured
+  ansible.builtin.file:
+    path: "{{ xtradb_configured }}"
+    state: "touch"
+    owner: root
+    group: root
+    mode: '0400'
+
+- name: Stop bootstrap and start normal mode
+  when:
+    - xtradb_bind_address == xtradb_master_node
+  block:
+    - name: Stop bootstrap mode on master node
+      ansible.builtin.service:
+        name: "{{ xtradb_service }}@bootstrap.service"
+        state: stopped
+
+    - name: Start normal mysql service on master node
+      ansible.builtin.service:
+        name: "{{ xtradb_service }}"
+        state: started
+  rescue:
+    - name: Get 1000 lines of logs
+      ansible.builtin.command: "tail -n 1000 {{ mysql_error_log_location }}"
+      register: dumplog
+      when: true
+    - name: Output logs
+      ansible.builtin.debug:
+        var: dumplog.stdout_lines
+...

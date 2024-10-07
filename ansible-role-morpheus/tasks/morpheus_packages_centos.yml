@@ -1,47 +1,47 @@
 ---
-# This is required because the rpm does not come from a repository, so ansible will always install a newer version
-- name: Upgrade flag check
+# Upgrade flag check
+- name: Set Morpheus package state based on upgrade flag
   set_fact:
     morpheus_package_state: latest
-  when: morpheus_upgrade_flag
+  when: morpheus_upgrade_flag | default(false)
 
-- name: Gather package facts
+# Gather package facts
+- name: Gather system package facts
   package_facts:
     manager: auto
 
+# CentOS 7
 - block:
-  - name: Morpheus UI | Install Morpheus
+  - name: Install Morpheus appliance on CentOS 7
     yum:
-        name: "{{ morpheus_package_centos_7 }}"
-        disable_gpg_check: "{{ morpheus_disable_rpm_gpg_check }}"
-        state: present
+      name: "{{ morpheus_package_centos_7 }}"
+      disable_gpg_check: "{{ morpheus_disable_rpm_gpg_check | default(false) }}"
+      state: "{{ morpheus_package_state }}"
 
-  - name: Morpheus UI | Install Morpheus Offline
+  - name: Install Morpheus appliance from offline package on CentOS 7
     yum:
-        name: "{{ morpheus_offline_package_centos }}"
-        disable_gpg_check: "{{ morpheus_disable_rpm_gpg_check }}"
-        state: present
-    when: morpheus_use_offline_package
+      name: "{{ morpheus_offline_package_centos }}"
+      disable_gpg_check: "{{ morpheus_disable_rpm_gpg_check | default(false) }}"
+      state: "{{ morpheus_package_state }}"
+    when: morpheus_use_offline_package | default(false)
 
-  when: (ansible_distribution_major_version == "7") and
-        (('morpheus-appliance' not in ansible_facts.packages) or
-        (morpheus_upgrade_flag))
+  when: ansible_distribution_major_version == "7" and
+        (('morpheus-appliance' not in ansible_facts.packages) or morpheus_upgrade_flag | default(false))
 
+# CentOS 8
 - block:
-  - name: Morpheus UI | Install Morpheus
+  - name: Install Morpheus appliance on CentOS 8
     yum:
-        name: "{{ morpheus_package_centos_8 }}"
-        disable_gpg_check: "{{ morpheus_disable_rpm_gpg_check }}"
-        state: present
+      name: "{{ morpheus_package_centos_8 }}"
+      disable_gpg_check: "{{ morpheus_disable_rpm_gpg_check | default(false) }}"
+      state: "{{ morpheus_package_state }}"
 
-  - name: Morpheus UI | Install Morpheus Offline
+  - name: Install Morpheus appliance from offline package on CentOS 8
     yum:
-        name: "{{ morpheus_offline_package_centos }}"
-        disable_gpg_check: "{{ morpheus_disable_rpm_gpg_check }}"
-        state: present
-    when: morpheus_use_offline_package
+      name: "{{ morpheus_offline_package_centos }}"
+      disable_gpg_check: "{{ morpheus_disable_rpm_gpg_check | default(false) }}"
+      state: "{{ morpheus_package_state }}"
+    when: morpheus_use_offline_package | default(false)
 
-  when: (ansible_distribution_major_version == "8") and
-        (('morpheus-appliance' not in ansible_facts.packages) or
-        (morpheus_upgrade_flag))
-        
+  when: ansible_distribution_major_version == "8" and
+        (('morpheus-appliance' not in ansible_facts.packages) or morpheus_upgrade_flag | default(false))

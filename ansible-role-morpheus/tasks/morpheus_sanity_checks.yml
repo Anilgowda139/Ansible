@@ -1,19 +1,20 @@
+---
 # DB Check
 - block:
-    - name: "Check for DB compatibility"
+    - name: "Check for DB compatibility for multi-node setup"
       debug:
-        msg: "Database must be external for more than one Morpheus node"
+        msg: "Database must be external for more than one Morpheus node."
 
     - meta: end_play
-  when: (groups[morpheus_group] | length > 1) and
-        (not morpheus_mysql_external)
+  when: (groups[morpheus_group] | length > 1) and 
+        (not morpheus_mysql_external | default(false))
 
 # RabbitMQ Check
 - block:
-    - name: Check for RabbitMQ Clustering
+    - name: "Check for RabbitMQ Clustering for multi-node setup"
       debug:
-        msg: "rabbitmq_external must be true for more than one Morpheus node"
+        msg: "RabbitMQ must be external for more than one Morpheus node."
 
     - meta: end_play
-  when: (groups[morpheus_group] | length > 1) and
-        (not morpheus_rabbitmq_external)
+  when: (groups[morpheus_group] | length > 1) and 
+        (not morpheus_rabbitmq_external | default(false))

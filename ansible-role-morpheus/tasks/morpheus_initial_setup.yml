@@ -1,5 +1,5 @@
 ---
-- name: Create initial setup JSON payload
+- name: Set up initial Morpheus setup JSON payload
   set_fact:
     morpheus_setup_payload:
       applianceName: "{{ morpheus_setup_appliance_name }}"
@@ -10,14 +10,14 @@
       email: "{{ morpheus_setup_admin_email }}"
       firstName: "{{ morpheus_setup_admin_firstname }}"
       lastName: "{{ morpheus_setup_admin_lastname }}"
-      backups: "{{ morpheus_setup_enable_backups }}"
-      monitoring: "{{ morpheus_setup_enable_monitoring }}"
-      logs: "{{ morpheus_setup_enable_logs }}"
-      hubMode: "{{ morpheus_setup_hub_mode }}"
+      backups: "{{ morpheus_setup_enable_backups | default(false) }}"
+      monitoring: "{{ morpheus_setup_enable_monitoring | default(false) }}"
+      logs: "{{ morpheus_setup_enable_logs | default(false) }}"
+      hubMode: "{{ morpheus_setup_hub_mode | default('skip') }}"
 
 - name: Add hub settings if not skipping hub registration or login
   set_fact:
-    morpheus_setup_payload: "{{ morpheus_setup_payload | combine( hubdata ) }}"
+    morpheus_setup_payload: "{{ morpheus_setup_payload | combine(hubdata) }}"
   vars:
     hubdata:
       hub:
@@ -35,4 +35,4 @@
     method: POST
     body_format: json
     body: "{{ morpheus_setup_payload | to_nice_json }}"
-    validate_certs: "{{ morpheus_validate_certs }}"
+    validate_certs: "{{ morpheus_validate_certs | default(true) }}"

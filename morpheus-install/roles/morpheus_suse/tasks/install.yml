@@ -1,0 +1,23 @@
+---
+- name: Install dependencies for SUSE
+  ansible.builtin.zypper:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - dependency1
+    - dependency2
+
+- name: Download Morpheus package for SUSE
+  ansible.builtin.get_url:
+    url: "https://downloads.morpheusdata.com/files/morpheus-appliance-7.0.6-2.sles15.x86_64.rpm"
+    # url: "https://downloads.morpheusdata.com/path-to/morpheus-suse-{{ morpheus_version }}.rpm"
+    dest: "/tmp/morpheus-suse.rpm"
+
+- name: Install Morpheus package on SUSE
+  ansible.builtin.command: rpm -ivh /tmp/morpheus-suse.rpm
+
+- name: Start and enable Morpheus service on SUSE
+  ansible.builtin.systemd:
+    name: morpheus
+    enabled: yes
+    state: started

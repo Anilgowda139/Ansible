@@ -1,0 +1,23 @@
+---
+- name: Install dependencies for CentOS
+  ansible.builtin.yum:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - dependency1
+    - dependency2
+
+- name: Download Morpheus package for CentOS
+  ansible.builtin.get_url:
+    # url: "https://downloads.morpheusdata.com/path-to/morpheus-centos-{{ morpheus_version }}.rpm"
+    url: "https://downloads.morpheusdata.com/files/morpheus-appliance-5.4.2-2.el7.x86_64.rpm"
+    dest: "/tmp/morpheus-centos.rpm"
+
+- name: Install Morpheus package on CentOS
+  ansible.builtin.command: rpm -ivh /tmp/morpheus-centos.rpm
+
+- name: Start and enable Morpheus service on CentOS
+  ansible.builtin.systemd:
+    name: morpheus
+    enabled: yes
+    state: started

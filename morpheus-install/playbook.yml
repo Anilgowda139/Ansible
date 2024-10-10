@@ -1,0 +1,34 @@
+---
+- name: Install Morpheus on 3-node clusters for each OS family
+  hosts: all
+  become: true
+  roles:
+    - role: common
+
+  tasks:
+    - name: Install Morpheus on SUSE 3-node cluster
+      include_role:
+        name: morpheus_suse
+      when: ansible_os_family == "Suse"
+      with_items:
+        - suse-node1
+        - suse-node2
+        - suse-node3
+
+    - name: Install Morpheus on CentOS/RHEL 3-node cluster
+      include_role:
+        name: morpheus_centos
+      when: ansible_os_family == "RedHat"
+      with_items:
+        - centos-node1
+        - centos-node2
+        - centos-node3
+
+    - name: Install Morpheus on Ubuntu 3-node cluster
+      include_role:
+        name: morpheus_ubuntu
+      when: ansible_os_family == "Debian"
+      with_items:
+        - ubuntu-node1
+        - ubuntu-node2
+        - ubuntu-node3

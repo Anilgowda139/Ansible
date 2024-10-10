@@ -1,0 +1,10 @@
+---
+- name: Ensure required directories are present
+  ansible.builtin.file:
+    path: /opt/morpheus
+    state: directory
+    mode: '0755'
+
+- name: Update package manager cache
+  ansible.builtin.package:
+    update_cache: yes

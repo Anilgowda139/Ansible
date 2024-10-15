@@ -1,44 +1,70 @@
 ---
-# Upgrade flag check
-- name: Set Morpheus package state based on upgrade flag
-  set_fact:
-    morpheus_package_state: latest
-  when: morpheus_upgrade_flag | default(false)
+- name: Validate required variables
+  assert:
+    that:
+      - morpheus_package_centos_7 is defined
+    fail_msg: "'morpheus_package_centos_7' is not defined. Please define it in your playbook or inventory."
+    success_msg: "'morpheus_package_centos_7' is defined."
 
-# Gather package facts
-- name: Gather system package facts
-  package_facts:
-    manager: auto
+# Debugging conditional skips
+- name: Debug the OS family
+  debug:
+    msg: "OS Family: {{ ansible_os_family }}"
 
-# CentOS 7
+- name: Install CentOS packages
+  include_tasks: morpheus_packages_centos.yml
+  when: ansible_os_family == 'RedHat'
+
+- name: Task skipped because OS is not RedHat
+  debug:
+    msg: "This task was skipped because OS is not RedHat."
+  when: ansible_os_family != 'RedHat'
+
+# Debug the version and flags before running CentOS 7 install
+- name: Debug CentOS 7 installation conditions
+  debug:
+    msg: >
+      Major version: {{ ansible_distribution_major_version }},
+      Morpheus Appliance installed: {{ 'morpheus-appliance' in ansible_facts.packages }},
+      Upgrade flag: {{ morpheus_upgrade_flag | default(false) }}
+
 - block:
-  - name: Install Morpheus appliance on CentOS 7
-    yum:
-      name: "{{ morpheus_package_centos_7 }}"
-      disable_gpg_check: "{{ morpheus_disable_rpm_gpg_check | default(false) }}"
-      state: "{{ morpheus_package_state }}"
+    - name: Install Morpheus on CentOS 7
+      yum:
+        name: "{{ morpheus_package_centos_7 }}"
+        disable_gpg_check: yes
+        state: latest
+      register: yum_install_result
+      failed_when: "'morpheus-appliance' not in yum_install_result.results"
 
-  - name: Install Morpheus appliance from offline package on CentOS 7
-    yum:
-      name: "{{ morpheus_offline_package_centos }}"
-      disable_gpg_check: "{{ morpheus_disable_rpm_gpg_check | default(false) }}"
-      state: "{{ morpheus_package_state }}"
-    when: morpheus_use_offline_package | default(false)
-  when: ansible_distribution_major_version == "7" and
-        (('morpheus-appliance' not in ansible_facts.packages) or morpheus_upgrade_flag | default(false))
+    - name: Debug the result of Morpheus installation
+      debug:
+        var: yum_install_result
 
-# CentOS 8
+    - name: Ensure Morpheus service is enabled and started
+      systemd:
+        name: morpheus
+        enabled: yes
+        state: started
+
+  when:
+    - ansible_distribution_major_version == "7"
+    - 'morpheus-appliance' not in ansible_facts.packages
+    - morpheus_upgrade_flag | default(false)
+  
 - block:
-  - name: Install Morpheus appliance on CentOS 8
-    yum:
-      name: "{{ morpheus_package_centos_8 }}"
-      disable_gpg_check: "{{ morpheus_disable_rpm_gpg_check | default(false) }}"
-      state: "{{ morpheus_package_state }}"
-  - name: Install Morpheus appliance from offline package on CentOS 8
-    yum:
-      name: "{{ morpheus_offline_package_centos }}"
-      disable_gpg_check: "{{ morpheus_disable_rpm_gpg_check | default(false) }}"
-      state: "{{ morpheus_package_state }}"
-    when: morpheus_use_offline_package | default(false)
-  when: ansible_distribution_major_version == "8" and
-        (('morpheus-appliance' not in ansible_facts.packages) or morpheus_upgrade_flag | default(false))
+    - name: Task skipped due to existing installation or no upgrade flag
+      debug:
+        msg: "Skipped because Morpheus is already installed or upgrade flag is false."
+    when:
+      - ansible_distribution_major_version == "7"
+      - 'morpheus-appliance' in ansible_facts.packages
+      - not morpheus_upgrade_flag | default(false)
+
+# Catch and report failed tasks in the playbook
+- block:
+    - name: Catch and handle failure during Morpheus installation
+      fail:
+        msg: "Morpheus installation failed on CentOS 7."
+  when:
+    - yum_install_result is failed

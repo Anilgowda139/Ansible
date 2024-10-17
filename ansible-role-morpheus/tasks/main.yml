@@ -1,19 +1,15 @@
 ---
 # Sanity Checks
-- name: Include Morpheus Sanity Checks
-  include_tasks: morpheus_sanity_checks.yml
 
-- name: Install packages for CentOS
-  include_tasks: morpheus_packages_centos.yml
+- include_tasks: morpheus_sanity_checks.yml
+
+- include_tasks: morpheus_packages_centos.yml
   when: ansible_os_family == 'RedHat'
 
-- name: Install packages for Ubuntu
-  include_tasks: morpheus_packages_ubuntu.yml
+- include_tasks: morpheus_packages_ubuntu.yml
   when: ansible_os_family == 'Debian'
 
-- name: Configure Morpheus
-  include_tasks: morpheus_configure.yml
+- include_tasks: morpheus_configure.yml
 
-- name: Perform Morpheus initial setup
-  include_tasks: morpheus_initial_setup.yml
-  when: morpheus_setup | default(false) | bool
+- include_tasks: morpheus_initial_setup.yml
+  when: morpheus_setup

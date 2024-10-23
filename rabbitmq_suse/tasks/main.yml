@@ -1,0 +1,20 @@
+---
+- name: Include RabbitMQ packages for SUSE
+  include_tasks: rabbitmq_packages_suse.yml
+  when: ansible_os_family == 'Suse'
+
+- name: Include RabbitMQ TLS self-signed certificate generation for SUSE
+  include_tasks: rabbitmq_tls_self_signed_suse.yml
+  when: rabbitmq_tls_generate_self_signed_cert and ansible_os_family == 'Suse'
+
+- name: Include RabbitMQ plugin management
+  include_tasks: rabbitmq_plugins.yml
+
+- name: Include RabbitMQ service management
+  include_tasks: rabbitmq_service.yml
+
+- name: Include RabbitMQ user and vHost management
+  include_tasks: rabbitmq_user.yml
+
+- name: Include RabbitMQ queue policy management
+  include_tasks: rabbitmq_queue_policy.yml

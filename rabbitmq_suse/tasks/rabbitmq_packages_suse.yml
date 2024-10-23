@@ -1,0 +1,23 @@
+---
+- name: Add RabbitMQ Erlang repository for SUSE
+  zypper_repository:
+    name: "rabbitmq_erlang"
+    description: "RabbitMQ Erlang repository"
+    repo: "https://packagecloud.io/rabbitmq/erlang/sles/15.6"
+    auto_import_keys: true
+    gpgcheck: true
+
+- name: Add RabbitMQ repository for SUSE
+  zypper_repository:
+    name: "rabbitmq_server"
+    description: "RabbitMQ repository"
+    repo: "https://packagecloud.io/rabbitmq/rabbitmq-server/sles/15.6"
+    auto_import_keys: true
+    gpgcheck: true
+
+- name: Install RabbitMQ and Erlang on SUSE
+  package:
+    name:
+      - erlang
+      - rabbitmq-server
+    state: present

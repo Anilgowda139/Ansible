@@ -1,0 +1,6 @@
+---
+- name: Install RabbitMQ
+  hosts: localhost
+  become: yes  
+  roles:
+    - rabbitmq_suse
